@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>115 精神醫療中心・炒豆花科 | 園遊會點餐叫號系統</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            hospital: {
+              teal: '#0d9488',
+              dark: '#0f766e',
+              deeptall: '#115e59',
+              light: '#f0fdfa'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @keyframes pulse-fast {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+    }
+    .animate-pulse-fast {
+      animation: pulse-fast 1.2s infinite ease-in-out;
+    }
+    .stamp-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      text-transform: uppercase;
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      border-radius: 0.5rem;
+      border-width: 3px;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans selection:bg-teal-700 selection:text-white">
+
+  <!-- ================= TOP HEADER ================= -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-2.5 shadow-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Hospital Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('customer')">
+        <div class="w-10 h-10 rounded-xl bg-teal-700 text-white flex items-center justify-center font-black shadow-md border-2 border-teal-600 text-xl">
+          ✚
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-teal-100 text-teal-800 font-mono font-bold tracking-wider">
+              CLINICAL NO.115
+            </span>
+            <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900">
+              115 精神醫療中心・炒豆花科
+            </h1>
+          </div>
+          <p class="text-[11px] text-slate-500">
+            <i class="fa-solid fa-heart-pulse text-teal-600"></i>
+            碳水現炒鎮定複方 • 蝶豆花神經舒壓特調 • 門診叫號出院
+          </p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex items-center gap-2">
+        <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+          <button id="nav-btn-customer" onclick="switchTab('customer')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-teal-800 shadow-sm border border-slate-200 transition-all">
+            <i class="fa-solid fa-stethoscope text-teal-600"></i>
+            <span>門診點餐掛號</span>
+          </button>
+          <button id="nav-btn-board" onclick="switchTab('board')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+            <i class="fa-solid fa-tv"></i>
+            <span>領藥叫號大看板</span>
+          </button>
+        </div>
+
+        <!-- Staff Entry Button (Strictly Protected) -->
+        <div id="staff-auth-container">
+          <button onclick="openPasswordModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 transition-all shadow-sm">
+            <i class="fa-solid fa-lock text-slate-400"></i>
+            <span>醫護人員入口</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT CONTAINER ================= -->
+  <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 pb-28">
+
+    <!-- 1. CUSTOMER CLINIC ORDERING VIEW -->
+    <section id="view-customer" class="space-y-6">
+      
+      <!-- Current Order Prescription Banner (Shown when user has active order) -->
+      <div id="customer-active-order-banner" class="hidden bg-white border-2 border-teal-600 rounded-2xl p-5 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-4 text-center md:text-left">
+          <div class="bg-teal-700 text-white px-4 py-3 rounded-xl font-mono font-black text-2xl tracking-wider shadow-inner flex flex-col items-center justify-center min-w-[90px]">
+            <span class="text-[10px] text-teal-200 uppercase font-semibold">門診號牌</span>
+            <span id="active-banner-order-number">#001</span>
+          </div>
+          <div>
+            <div class="flex items-center justify-center md:justify-start gap-2 mb-1">
+              <span class="text-xs text-slate-500">處方進度：</span>
+              <span id="active-banner-status-badge"></span>
+            </div>
+            <h3 id="active-banner-headline" class="font-bold text-slate-900 text-base sm:text-lg"></h3>
+            <p class="text-xs text-slate-500 mt-0.5">
+              批價金額：<span id="active-banner-total" class="text-teal-800 font-bold text-sm font-mono"></span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="openPrescriptionTicketModal()" class="px-4 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-2 transition-all">
+            <i class="fa-solid fa-file-prescription"></i>
+            <span>檢視處方病歷卡</span>
+          </button>
+          <button onclick="clearActiveCustomerOrder()" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold">
+            再開一單
+          </button>
+        </div>
+      </div>
+
+      <!-- Stall Banner -->
+      <div class="bg-gradient-to-r from-teal-800 via-teal-700 to-cyan-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        <div class="absolute -right-6 -bottom-8 opacity-10 text-9xl font-black select-none pointer-events-none">✚</div>
+        <div class="relative z-10 max-w-2xl">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold tracking-wider text-teal-100 uppercase mb-3">
+            <i class="fa-solid fa-notes-medical text-emerald-300"></i> 115 精神醫療中心・臨床大火現炒科
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-black tracking-tight leading-snug mb-2">
+            大火現炒碳水複方泡麵 🍜<br class="hidden sm:inline">
+            神經舒壓蝶豆花漸層特調 🍹
+          </h2>
+          <p class="text-teal-100/90 text-xs sm:text-sm leading-relaxed mb-4">
+            園遊會免排隊掛號流程：下方直接點選品項增減 ➔ 送出處方領取門診叫號牌 ➔ 帶著手機至 115 窗口付現批價 ➔ 聽候同學大聲喊號領藥出院！
+          </p>
+          <div class="flex flex-wrap gap-2 text-xs font-semibold text-teal-100">
+            <span class="bg-white/10 px-3 py-1 rounded-lg border border-white/15">🍳 炒泡麵加蛋 $70</span>
+            <span class="bg-white/10 px-3 py-1 rounded-lg border border-white/15">🍹 蝶豆花特調 $90</span>
+            <span class="bg-white/10 px-3 py-1 rounded-lg border border-white/15">✨ 超值套餐 $140 起</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Menu Items Grid -->
+      <div>
+        <div class="flex items-center justify-between mb-3 px-1">
+          <div>
+            <h3 class="text-lg font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-pills text-teal-700"></i>
+              <span>臨床專用處方餐點清單</span>
+            </h3>
+            <p class="text-xs text-slate-500">點擊加號直接納入處方單，無任何繁瑣客製化選項</p>
+          </div>
+        </div>
+
+        <div id="menu-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MCDONALD'S STYLE LED CALL BOARD VIEW -->
+    <section id="view-board" class="hidden space-y-4">
+      <div class="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 border border-slate-800 shadow-xl">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-teal-500 text-slate-950 font-black flex items-center justify-center text-lg font-mono">
+            115
+          </div>
+          <div>
+            <h2 class="text-base sm:text-lg font-black tracking-wider text-teal-300">
+              門診領藥即時叫號大看板 • CLINICAL PHARMACY CALL BOARD
+            </h2>
+            <p class="text-xs text-slate-400">
+              園遊會人潮吵雜以此看板為準！綠色號碼亮起請持手機至 115 窗口領藥
+            </p>
+          </div>
+        </div>
+
+        <button onclick="toggleAudio()" id="board-audio-btn" class="px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all flex items-center gap-1.5 bg-teal-950 border-teal-500/60 text-teal-300">
+          <i class="fa-solid fa-volume-high"></i>
+          <span id="board-audio-text">門診叮咚聲已開</span>
+        </button>
+      </div>
+
+      <!-- Dual Column LED Call Board -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 min-h-[460px]">
+        <!-- Left: Preparing -->
+        <div class="bg-slate-900 border-2 border-amber-500/40 rounded-3xl p-5 sm:p-6 flex flex-col shadow-2xl">
+          <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+            <div class="flex items-center gap-2.5">
+              <span class="w-3.5 h-3.5 rounded-full bg-amber-400 animate-pulse"></span>
+              <h3 class="text-lg sm:text-xl font-black text-amber-300 tracking-wider">
+                調理製作中 PREPARING
+              </h3>
+            </div>
+            <span id="board-count-preparing" class="text-xs font-mono font-bold bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+              0 單
+            </span>
+          </div>
+          <div id="board-preparing-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 flex-1 content-start">
+            <!-- Dynamic Items -->
+          </div>
+        </div>
+
+        <!-- Right: Now Serving (Ready) -->
+        <div class="bg-gradient-to-b from-slate-950 via-teal-950/40 to-slate-950 border-2 border-emerald-500 rounded-3xl p-5 sm:p-6 flex flex-col shadow-2xl ring-2 ring-emerald-500/20">
+          <div class="flex items-center justify-between pb-4 border-b border-emerald-500/40 mb-5">
+            <div class="flex items-center gap-2.5">
+              <span class="w-3.5 h-3.5 rounded-full bg-emerald-400 animate-ping"></span>
+              <h3 class="text-lg sm:text-xl font-black text-emerald-400 tracking-wider">
+                請出院取餐 NOW SERVING
+              </h3>
+            </div>
+            <span id="board-count-ready" class="text-xs font-mono font-black bg-emerald-500 text-slate-950 px-3 py-0.5 rounded-full shadow-lg shadow-emerald-500/30">
+              0 單待領
+            </span>
+          </div>
+          <div id="board-ready-list" class="grid grid-cols-2 sm:grid-cols-3 gap-3 flex-1 content-start">
+            <!-- Dynamic Items -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. STAFF CLINIC BACKEND VIEW (Locked by default, Unlocked with 115115) -->
+    <section id="view-staff" class="hidden space-y-5">
+      <!-- Staff Console Header -->
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-teal-800 text-white flex items-center justify-center font-black">
+            <i class="fa-solid fa-hospital-user text-teal-200"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="font-black text-slate-900 text-base">
+                115 精神醫療中心・醫護後台工作台
+              </h3>
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 font-mono px-2 py-0.5 rounded font-bold">
+                AUTH_OK
+              </span>
+            </div>
+            <p class="text-xs text-slate-500">
+              確認批價收現 ➔ 大廚開火現炒 ➔ 大聲喊號取餐出院
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+            <button onclick="setStaffSubTab('orders')" id="subtab-btn-orders" class="px-3 py-1.5 rounded-lg bg-white text-teal-900 shadow-sm transition-all">
+              處方與出餐
+            </button>
+            <button onclick="setStaffSubTab('stats')" id="subtab-btn-stats" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+              門診營運報表
+            </button>
+            <button onclick="setStaffSubTab('poster')" id="subtab-btn-poster" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+              攤位掃碼牌
+            </button>
+          </div>
+
+          <button onclick="lockStaffPortal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold transition-all">
+            <i class="fa-solid fa-lock"></i>
+            <span>鎖定離開</span>
+          </button>
+
+          <!-- 小巧低調的重置全部按鈕，避免誤觸 -->
+          <button onclick="openResetConfirmModal()" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 text-xs font-medium transition-all" title="重置全部系統資料">
+            <i class="fa-solid fa-rotate-left text-[11px]"></i>
+            <span>重置全部</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Subtab: Orders List -->
+      <div id="staff-subtab-orders" class="space-y-4">
+        <!-- Revenue & Count Summary Chips -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
+            <span class="text-[11px] text-slate-400 block font-semibold">今日實收金額</span>
+            <div id="stats-chip-revenue" class="text-2xl font-black text-teal-800 font-mono mt-0.5">$0</div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
+            <span class="text-[11px] text-slate-400 block font-semibold">待現金批價</span>
+            <div id="stats-chip-pending" class="text-2xl font-black text-rose-600 font-mono mt-0.5">0 <span class="text-xs text-slate-400 font-normal">單</span></div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
+            <span class="text-[11px] text-slate-400 block font-semibold">大火快炒調理中</span>
+            <div id="stats-chip-preparing" class="text-2xl font-black text-amber-600 font-mono mt-0.5">0 <span class="text-xs text-slate-400 font-normal">單</span></div>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm">
+            <span class="text-[11px] text-slate-400 block font-semibold">喊號等候取餐</span>
+            <div id="stats-chip-ready" class="text-2xl font-black text-indigo-600 font-mono mt-0.5">0 <span class="text-xs text-slate-400 font-normal">單</span></div>
+          </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex overflow-x-auto gap-2 pb-1 text-xs font-bold" id="staff-filters">
+          <button onclick="setStaffFilter('all')" class="staff-filter-btn px-3.5 py-2 rounded-xl whitespace-nowrap border bg-teal-700 text-white border-teal-700 shadow-sm" data-filter="all">全部病歷單</button>
+          <button onclick="setStaffFilter('pending_payment')" class="staff-filter-btn px-3.5 py-2 rounded-xl whitespace-nowrap border bg-white text-slate-600 border-slate-200 hover:text-slate-900" data-filter="pending_payment">🔴 待收現批價</button>
+          <button onclick="setStaffFilter('preparing')" class="staff-filter-btn px-3.5 py-2 rounded-xl whitespace-nowrap border bg-white text-slate-600 border-slate-200 hover:text-slate-900" data-filter="preparing">🟡 廚房大火炒麵中</button>
+          <button onclick="setStaffFilter('ready')" class="staff-filter-btn px-3.5 py-2 rounded-xl whitespace-nowrap border bg-white text-slate-600 border-slate-200 hover:text-slate-900" data-filter="ready">🟢 喊號請取餐</button>
+          <button onclick="setStaffFilter('completed')" class="staff-filter-btn px-3.5 py-2 rounded-xl whitespace-nowrap border bg-white text-slate-600 border-slate-200 hover:text-slate-900" data-filter="completed">⚪ 已領藥出院</button>
+        </div>
+
+        <!-- Orders Cards List -->
+        <div id="staff-orders-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Subtab: Stats -->
+      <div id="staff-subtab-stats" class="hidden bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-sm">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-chart-line text-teal-700"></i>
+          <span>園遊會全日門診批價銷量統計</span>
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <span class="text-xs text-slate-500 font-semibold">實收自費營收</span>
+            <div id="stats-total-revenue" class="text-3xl font-black text-teal-800 font-mono mt-1">$0</div>
+            <span class="text-[11px] text-slate-400">（已批價繳費入帳）</span>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <span class="text-xs text-slate-500 font-semibold">炒泡麵出餐總量</span>
+            <div id="stats-total-noodles" class="text-3xl font-black text-slate-900 font-mono mt-1">0 <span class="text-sm font-normal text-slate-500">份</span></div>
+            <span class="text-[11px] text-slate-400">（單點＋套餐）</span>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <span class="text-xs text-slate-500 font-semibold">蝶豆花特調總杯數</span>
+            <div id="stats-total-drinks" class="text-3xl font-black text-cyan-800 font-mono mt-1">0 <span class="text-sm font-normal text-slate-500">杯</span></div>
+            <span class="text-[11px] text-slate-400">（單點＋套餐）</span>
+          </div>
+          <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <span class="text-xs text-slate-500 font-semibold">雙享套餐售出</span>
+            <div id="stats-total-combos" class="text-3xl font-black text-sky-800 font-mono mt-1">0 <span class="text-sm font-normal text-slate-500">份</span></div>
+            <span class="text-[11px] text-slate-400">（超值優惠組）</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subtab: Poster -->
+      <div id="staff-subtab-poster" class="hidden bg-white border border-slate-200 rounded-2xl p-6 text-center max-w-lg mx-auto space-y-4 shadow-sm">
+        <div class="inline-block p-4 bg-slate-900 rounded-3xl shadow-xl">
+          <img id="stall-qr-image" src="" alt="Stall QR Code" class="w-56 h-56 mx-auto rounded-2xl bg-white p-2">
+        </div>
+        <div>
+          <h3 class="text-lg font-black text-slate-900">115 精神醫療中心・現場掃碼掛號牌</h3>
+          <p class="text-xs text-slate-500 mt-1">
+            將此畫面展示在攤位前方，同學用手機相機掃描即可立刻點餐拿號碼牌！
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FLOATING CART BAR ================= -->
+  <div id="floating-cart-bar" class="hidden fixed bottom-4 left-4 right-4 z-40 max-w-xl mx-auto transition-all">
+    <div class="bg-slate-900/95 backdrop-blur-md border border-slate-700 shadow-2xl rounded-2xl p-3 sm:p-4 flex items-center justify-between gap-3 text-white">
+      <button onclick="openCartModal()" class="flex items-center gap-3 text-left flex-1">
+        <div class="relative w-11 h-11 rounded-xl bg-teal-600 flex items-center justify-center shadow-md">
+          <i class="fa-solid fa-file-medical text-lg text-white"></i>
+          <span id="floating-cart-badge" class="absolute -top-1 -right-1 bg-amber-400 text-slate-950 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900 font-mono">0</span>
+        </div>
+        <div>
+          <div class="text-[11px] text-slate-400">目前處方總計</div>
+          <div class="text-xl font-black text-amber-400 font-mono">
+            $<span id="floating-cart-total">0</span> 
+            <span class="text-xs font-normal text-slate-300">(<span id="floating-cart-count">0</span> 份)</span>
+          </div>
+        </div>
+      </button>
+
+      <button onclick="openCartModal()" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm tracking-wide shadow-md active:scale-95 transition-all flex items-center gap-1.5">
+        <span>檢視處方</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= CART SUMMARY DRAWER MODAL ================= -->
+  <div id="modal-cart" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200">
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-file-lines text-teal-700"></i>
+          <div>
+            <h3 class="font-black text-base text-slate-900">門診處方清單確認</h3>
+            <span class="text-[10px] text-slate-400 font-mono">PRESCRIPTION SUMMARY</span>
+          </div>
+        </div>
+        <button onclick="closeCartModal()" class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 flex items-center justify-center">✕</button>
+      </div>
+
+      <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-3">
+        <div id="cart-items-list" class="space-y-3">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div class="pt-2">
+          <label class="text-xs text-slate-500 block mb-1 font-semibold">患者特別備註（選填）：</label>
+          <input type="text" id="cart-order-note" placeholder="例如：不要蔥、分裝、極度飢餓..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-teal-600 focus:bg-white">
+        </div>
+
+        <div class="bg-teal-50 border border-teal-200 rounded-xl p-3 text-xs text-teal-900 space-y-1">
+          <div class="font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-info text-teal-700"></i>
+            批價取餐流程說明：
+          </div>
+          <p class="text-teal-800 leading-relaxed text-[11px]">
+            點擊確認送出後，系統將生成<strong>「門診處方簽號碼牌」</strong>。請持手機畫面至<strong>「115 精神病院-炒豆花」</strong>攤位窗口繳納現金，確認收款後大廚即刻開火現炒！
+          </p>
+        </div>
+      </div>
+
+      <div class="p-4 sm:p-5 border-t border-slate-100 bg-white">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold text-slate-500">應付批價總額</span>
+          <span class="text-2xl font-black text-teal-800 font-mono">$<span id="modal-cart-total">0</span> 元</span>
+        </div>
+        <button onclick="submitOrder()" class="w-full py-3.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-black text-sm shadow-md active:scale-98 transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check"></i>
+          <span>開立處方送出（領取門診叫號牌）</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PRESCRIPTION TICKET MODAL ================= -->
+  <div id="modal-prescription-ticket" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-slate-300 text-slate-800 max-w-md w-full shadow-2xl p-6 relative">
+      <button onclick="closePrescriptionTicketModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center">✕</button>
+
+      <div class="border-b-2 border-slate-800 pb-3 text-center">
+        <div class="text-[10px] tracking-widest text-slate-500 font-mono uppercase">
+          CLINICAL HOSPITAL NO.115 • DISPENSARY TICKET
+        </div>
+        <h2 class="text-lg font-black text-slate-900 tracking-tight mt-0.5">
+          115 精神醫療中心・門診處方領藥號牌
+        </h2>
+      </div>
+
+      <div class="py-5 text-center">
+        <span class="text-xs font-semibold text-slate-400 block font-mono">PATIENT CALL NO.</span>
+        <div id="ticket-modal-number" class="text-6xl font-black text-slate-950 tracking-wider font-mono my-1">
+          #001
+        </div>
+        <div class="my-3 flex justify-center" id="ticket-modal-stamp-container">
+          <!-- Rendered ink stamp -->
+        </div>
+      </div>
+
+      <div id="ticket-modal-instructions" class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-center text-xs">
+        <!-- Rendered instructions -->
+      </div>
+
+      <div class="my-4 space-y-1.5 text-xs border-t border-dashed border-slate-200 pt-3">
+        <span class="text-[11px] font-bold text-slate-500 block">處方明細：</span>
+        <div id="ticket-modal-items" class="space-y-1"></div>
+        <div id="ticket-modal-note-row" class="text-slate-500 text-[11px] italic pt-1 hidden"></div>
+        <div class="flex justify-between font-bold text-sm text-slate-900 border-t border-slate-300 pt-2 font-mono">
+          <span>批價合計</span>
+          <span class="text-teal-800">$<span id="ticket-modal-total">0</span> 元整</span>
+        </div>
+      </div>
+
+      <button onclick="closePrescriptionTicketModal()" class="w-full py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all">
+        收合處方簽
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= PASSWORD VERIFICATION MODAL ================= -->
+  <div id="modal-password" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative text-center">
+      <button onclick="closePasswordModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-lg w-7 h-7 rounded-full flex items-center justify-center">✕</button>
+
+      <div class="w-12 h-12 bg-teal-50 text-teal-700 border border-teal-200 rounded-xl flex items-center justify-center mx-auto mb-3">
+        <i class="fa-solid fa-user-shield text-xl"></i>
+      </div>
+
+      <h3 class="text-lg font-black text-slate-900">請輸入密碼</h3>
+      <p class="text-xs text-slate-500 mt-1 mb-5">
+        115 精神醫療中心・醫護人員工作台權限驗證
+      </p>
+
+      <form onsubmit="handleVerifyPassword(event)" class="space-y-4">
+        <div>
+          <input type="password" id="staff-password-input" placeholder="請輸入密碼" class="w-full bg-slate-50 border border-slate-300 focus:border-teal-600 focus:bg-white text-center text-lg font-mono tracking-widest py-2.5 px-4 rounded-xl text-slate-900 focus:outline-none transition-all">
+          <p id="password-error-msg" class="hidden text-rose-600 text-xs font-bold mt-2">
+            密碼錯誤，請重新輸入
+          </p>
+        </div>
+
+        <button type="submit" class="w-full py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-sm tracking-wide shadow-md active:scale-98 transition-all">
+          驗證登入
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= RESET STEP 1: CONFIRMATION MODAL ================= -->
+  <div id="modal-reset-confirm" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative text-center">
+      <div class="w-12 h-12 bg-amber-50 text-amber-600 border border-amber-200 rounded-xl flex items-center justify-center mx-auto mb-3">
+        <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+      </div>
+
+      <h3 class="text-lg font-black text-slate-900">確定要重置嗎？</h3>
+      <p class="text-xs text-slate-500 mt-2 mb-6 leading-relaxed">
+        重置將會清空所有訂單、領藥看板、營收報表，取餐號碼將重新歸零從 #001 開始計算。
+      </p>
+
+      <div class="grid grid-cols-2 gap-3">
+        <button type="button" onclick="closeResetConfirmModal()" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-all">
+          否
+        </button>
+        <button type="button" onclick="proceedResetPassword()" class="py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-md active:scale-98 transition-all">
+          是
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= RESET STEP 2: PASSWORD MODAL (Strictly 123456) ================= -->
+  <div id="modal-reset-password" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 max-w-sm w-full shadow-2xl relative text-center">
+      <button onclick="closeResetPasswordModal()" class="absolute top-3 right-3 text-slate-400 hover:text-slate-600 text-lg w-7 h-7 rounded-full flex items-center justify-center">✕</button>
+
+      <div class="w-12 h-12 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl flex items-center justify-center mx-auto mb-3">
+        <i class="fa-solid fa-key text-xl"></i>
+      </div>
+
+      <h3 class="text-lg font-black text-slate-900">請輸入密碼</h3>
+      <p class="text-xs text-slate-500 mt-1 mb-5">
+        此操作不可復原，請輸入重置密碼繼續
+      </p>
+
+      <form onsubmit="handleVerifyResetPassword(event)" class="space-y-4">
+        <div>
+          <input type="password" id="reset-password-input" placeholder="請輸入密碼" class="w-full bg-slate-50 border border-slate-300 focus:border-rose-600 focus:bg-white text-center text-lg font-mono tracking-widest py-2.5 px-4 rounded-xl text-slate-900 focus:outline-none transition-all">
+          <p id="reset-password-error" class="hidden text-rose-600 text-xs font-bold mt-2">
+            密碼錯誤，請重新輸入
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <button type="button" onclick="closeResetPasswordModal()" class="py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition-all">
+            取消
+          </button>
+          <button type="submit" class="py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm tracking-wide shadow-md active:scale-98 transition-all">
+            確認重置
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= GIANT SHOUTOUT MODAL (8XL NO AUDIO BROADCAST) ================= -->
+  <div id="modal-shout" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white border-4 border-teal-600 rounded-3xl max-w-xl w-full shadow-2xl overflow-hidden">
+      <div class="bg-teal-700 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-bullhorn text-amber-300 text-xl animate-bounce"></i>
+          <span class="font-black text-lg tracking-wider">現場大聲喊號通知（無廣播）</span>
+        </div>
+        <span class="text-xs bg-teal-900/60 text-teal-100 px-2.5 py-1 rounded-full font-mono">
+          DISPENSE READY
+        </span>
+      </div>
+
+      <div class="p-6 text-center space-y-5">
+        <p class="text-sm font-semibold text-slate-600">
+          園遊會現場熱鬧吵雜，請顧攤同學直接扯開喉嚨大喊：
+        </p>
+
+        <div class="bg-slate-50 border-2 border-teal-500 rounded-3xl py-7 px-4 shadow-inner">
+          <div id="shout-order-number" class="text-7xl sm:text-8xl font-black text-teal-800 tracking-wider font-mono">
+            #001
+          </div>
+          <div id="shout-order-dialogue" class="text-rose-600 font-black text-2xl sm:text-3xl mt-3 tracking-wide">
+            「請大聲喊：【#001 號】取餐出院！」
+          </div>
+        </div>
+
+        <div class="bg-teal-50/70 border border-teal-200 rounded-2xl p-4 text-left text-xs sm:text-sm">
+          <span class="text-teal-900 font-bold block mb-1.5 flex items-center gap-1.5">
+            <i class="fa-solid fa-clipboard-list text-teal-700"></i>
+            處方內容確認（喊號時可順便報餐）：
+          </span>
+          <div id="shout-order-items" class="space-y-1"></div>
+          <div id="shout-order-note" class="text-amber-800 text-xs mt-2 pt-2 border-t border-teal-200 hidden"></div>
+        </div>
+
+        <button onclick="closeShoutModal()" class="w-full py-4 rounded-2xl bg-teal-700 hover:bg-teal-800 text-white font-black text-lg shadow-xl active:scale-98 transition-all flex items-center justify-center gap-2">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>我已大聲喊號！（關閉提示）</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Element -->
+  <div id="toast" class="fixed top-4 right-4 z-50 hidden bg-teal-800 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 border border-teal-600 text-sm font-semibold tracking-wide">
+    <i class="fa-solid fa-bell text-emerald-300"></i>
+    <span id="toast-text">提示文字</span>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500 mt-auto">
+    115 精神醫療中心・炒豆花科（CLINICAL HOSPITAL NO.115）• 園遊會手機掛號・現金批價・領藥叫號系統
+  </footer>
+
+  <!-- ================= JAVASCRIPT APPLICATION LOGIC ================= -->
+  <script>
+    // --- 1. Clinical Menu Definition ---
+    const CLINICAL_MENU = [
+      {
+        id: 'noodle_plain',
+        name: '炒泡麵',
+        code: 'RX-M01',
+        price: 60,
+        tag: '常備處方',
+        tagClass: 'bg-teal-50 text-teal-800 border-teal-200',
+        desc: '高劑量碳水鎮定複方・主治大廚現炒',
+        icon: '🍜'
+      },
+      {
+        id: 'noodle_egg',
+        name: '炒泡麵加蛋',
+        code: 'RX-M02',
+        price: 70,
+        tag: '強效加強',
+        tagClass: 'bg-emerald-50 text-emerald-800 border-emerald-300 font-bold',
+        desc: '高劑量碳水鎮定複方 + 營養增效荷包蛋',
+        icon: '🍳'
+      },
+      {
+        id: 'drink_butterfly',
+        name: '蝶豆花漸層飲料',
+        code: 'RX-D01',
+        price: 90,
+        tag: '神經舒壓',
+        tagClass: 'bg-cyan-50 text-cyan-800 border-cyan-200',
+        desc: '院長秘傳蝶豆花神經舒壓漸層特調・500ml',
+        icon: '🍹'
+      },
+      {
+        id: 'combo_normal',
+        name: '超值套餐（各一）',
+        code: 'RX-C01',
+        price: 140,
+        tag: '合劑現省 $10',
+        tagClass: 'bg-sky-50 text-sky-800 border-sky-300 font-bold',
+        desc: '炒泡麵 1 份 + 蝶豆花漸層飲料 1 杯・現省 10 元',
+        icon: '✨'
+      },
+      {
+        id: 'combo_egg',
+        name: '超值套餐加蛋',
+        code: 'RX-C02',
+        price: 145,
+        tag: '特惠極限推薦',
+        tagClass: 'bg-amber-50 text-amber-900 border-amber-300 font-extrabold',
+        desc: '炒泡麵加蛋 1 份 + 蝶豆花漸層飲料 1 杯・特惠強烈推薦',
+        icon: '👑'
+      }
+    ];
+
+    // --- State Storage ---
+    let currentTab = 'customer';
+    let isStaffUnlocked = false;
+    let staffFilter = 'all';
+    let staffSubTab = 'orders';
+    let audioEnabled = true;
+
+    // Cart: Array of { id, name, price, code, quantity }
+    let cart = [];
+
+    // Orders in memory (預設為空 []，無假訂單，支援本地快取儲存)
+    let orders = [];
+    try {
+      const savedOrders = localStorage.getItem('fair_115_orders');
+      if (savedOrders) {
+        orders = JSON.parse(savedOrders);
+      }
+    } catch (e) {
+      orders = [];
+    }
+
+    // Current Customer Active Ticket
+    let activeCustomerOrderId = null;
+
+    // Cross-tab Communication Broadcast Channel
+    const channel = (typeof BroadcastChannel !== 'undefined') ? new BroadcastChannel('fair_115_channel') : null;
+    if (channel) {
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'SYNC_ORDERS') {
+          orders = event.data.orders || [];
+          renderAll();
+        }
+      };
+    }
+
+    function broadcastSync() {
+      try {
+        localStorage.setItem('fair_115_orders', JSON.stringify(orders));
+      } catch (e) {}
+      if (channel) {
+        channel.postMessage({ type: 'SYNC_ORDERS', orders });
+      }
+    }
+
+    // --- Audio Chime ---
+    function playHospitalChime() {
+      if (!audioEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const t = ctx.currentTime;
+        
+        // Tone 1
+        const osc1 = ctx.createOscillator();
+        const g1 = ctx.createGain();
+        osc1.frequency.setValueAtTime(783.99, t);
+        g1.gain.setValueAtTime(0.2, t);
+        g1.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        osc1.connect(g1);
+        g1.connect(ctx.destination);
+        osc1.start(t);
+        osc1.stop(t + 0.4);
+
+        // Tone 2
+        const osc2 = ctx.createOscillator();
+        const g2 = ctx.createGain();
+        osc2.frequency.setValueAtTime(523.25, t + 0.22);
+        g2.gain.setValueAtTime(0.25, t + 0.22);
+        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+        osc2.connect(g2);
+        g2.connect(ctx.destination);
+        osc2.start(t + 0.22);
+        osc2.stop(t + 0.8);
+      } catch (e) {
+        console.warn('Audio note prevented:', e);
+      }
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      const btnText = document.getElementById('board-audio-text');
+      const btn = document.getElementById('board-audio-btn');
+      if (audioEnabled) {
+        btnText.innerText = '門診叮咚聲已開';
+        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all flex items-center gap-1.5 bg-teal-950 border-teal-500/60 text-teal-300';
+      } else {
+        btnText.innerText = '靜音中';
+        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-mono font-bold border transition-all flex items-center gap-1.5 bg-slate-800 border-slate-700 text-slate-400';
+      }
+    }
+
+    // --- Toast Notification ---
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toast-text');
+      toastText.innerText = text;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+
+    // --- Tab Switching ---
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById('view-customer').classList.add('hidden');
+      document.getElementById('view-board').classList.add('hidden');
+      document.getElementById('view-staff').classList.add('hidden');
+
+      const btnCustomer = document.getElementById('nav-btn-customer');
+      const btnBoard = document.getElementById('nav-btn-board');
+
+      btnCustomer.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all';
+      btnBoard.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all';
+
+      if (tab === 'customer') {
+        document.getElementById('view-customer').classList.remove('hidden');
+        btnCustomer.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-teal-800 shadow-sm border border-slate-200 transition-all';
+      } else if (tab === 'board') {
+        document.getElementById('view-board').classList.remove('hidden');
+        btnBoard.className = 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-teal-700 text-white shadow-sm transition-all';
+      } else if (tab === 'staff' && isStaffUnlocked) {
+        document.getElementById('view-staff').classList.remove('hidden');
+      }
+
+      renderAll();
+    }
+
+    // --- Password Authentication (Strictly 115115) ---
+    function openPasswordModal() {
+      document.getElementById('staff-password-input').value = '';
+      document.getElementById('password-error-msg').classList.add('hidden');
+      document.getElementById('modal-password').classList.remove('hidden');
+      setTimeout(() => document.getElementById('staff-password-input').focus(), 100);
+    }
+
+    function closePasswordModal() {
+      document.getElementById('modal-password').classList.add('hidden');
+    }
+
+    function handleVerifyPassword(event) {
+      event.preventDefault();
+      const val = document.getElementById('staff-password-input').value;
+      if (val === '115115') {
+        isStaffUnlocked = true;
+        closePasswordModal();
+        updateStaffAuthUI();
+        switchTab('staff');
+        showToast('醫事人員身分驗證通過！');
+      } else {
+        document.getElementById('password-error-msg').classList.remove('hidden');
+        document.getElementById('staff-password-input').value = '';
+      }
+    }
+
+    // --- 重置全部系統功能（兩階段確認，密碼 123456） ---
+    function openResetConfirmModal() {
+      document.getElementById('modal-reset-confirm').classList.remove('hidden');
+    }
+
+    function closeResetConfirmModal() {
+      document.getElementById('modal-reset-confirm').classList.add('hidden');
+    }
+
+    function proceedResetPassword() {
+      closeResetConfirmModal();
+      document.getElementById('reset-password-input').value = '';
+      document.getElementById('reset-password-error').classList.add('hidden');
+      document.getElementById('modal-reset-password').classList.remove('hidden');
+      setTimeout(() => document.getElementById('reset-password-input').focus(), 100);
+    }
+
+    function closeResetPasswordModal() {
+      document.getElementById('modal-reset-password').classList.add('hidden');
+    }
+
+    function handleVerifyResetPassword(event) {
+      event.preventDefault();
+      const val = document.getElementById('reset-password-input').value;
+      if (val === '123456') {
+        orders = [];
+        cart = [];
+        activeCustomerOrderId = null;
+        try {
+          localStorage.removeItem('fair_115_orders');
+        } catch (e) {}
+        closeResetPasswordModal();
+        broadcastSync();
+        renderCustomerMenu();
+        renderCartUI();
+        renderAll();
+        showToast('系統已完全重置！所有訂單已清空，號碼重新歸零');
+      } else {
+        document.getElementById('reset-password-error').classList.remove('hidden');
+        document.getElementById('reset-password-input').value = '';
+      }
+    }
+
+    function lockStaffPortal() {
+      isStaffUnlocked = false;
+      updateStaffAuthUI();
+      switchTab('customer');
+      showToast('已安全鎖定並退出醫護後台');
+    }
+
+    function updateStaffAuthUI() {
+      const container = document.getElementById('staff-auth-container');
+      if (isStaffUnlocked) {
+        container.innerHTML = `
+          <button onclick="switchTab('staff')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-teal-900 text-teal-100 shadow-md ring-2 ring-teal-500 transition-all">
+            <i class="fa-solid fa-hospital-user text-teal-400"></i>
+            <span>醫護作業後台</span>
+          </button>
+        `;
+      } else {
+        container.innerHTML = `
+          <button onclick="openPasswordModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-800 bg-white border border-slate-200 hover:border-slate-300 transition-all shadow-sm">
+            <i class="fa-solid fa-lock text-slate-400"></i>
+            <span>醫護人員入口</span>
+          </button>
+        `;
+      }
+    }
+
+    // --- Cart Logic ---
+    function addToCart(itemId) {
+      const item = CLINICAL_MENU.find(m => m.id === itemId);
+      if (!item) return;
+      const existing = cart.find(c => c.id === itemId);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({ ...item, quantity: 1 });
+      }
+      showToast(`已登錄處方：${item.name}`);
+      renderCustomerMenu();
+      renderCartUI();
+    }
+
+    function updateCartQty(itemId, delta) {
+      const idx = cart.findIndex(c => c.id === itemId);
+      if (idx !== -1) {
+        cart[idx].quantity += delta;
+        if (cart[idx].quantity <= 0) {
+          cart.splice(idx, 1);
+        }
+      }
+      renderCustomerMenu();
+      renderCartUI();
+    }
+
+    function openCartModal() {
+      if (cart.length === 0) return;
+      renderCartModalList();
+      document.getElementById('modal-cart').classList.remove('hidden');
+    }
+
+    function closeCartModal() {
+      document.getElementById('modal-cart').classList.add('hidden');
+    }
+
+    function renderCartUI() {
+      const count = cart.reduce((sum, i) => sum + i.quantity, 0);
+      const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
+      const floatingBar = document.getElementById('floating-cart-bar');
+      if (count > 0) {
+        floatingBar.classList.remove('hidden');
+        document.getElementById('floating-cart-badge').innerText = count;
+        document.getElementById('floating-cart-count').innerText = count;
+        document.getElementById('floating-cart-total').innerText = total;
+      } else {
+        floatingBar.classList.add('hidden');
+      }
+
+      document.getElementById('modal-cart-total').innerText = total;
+    }
+
+    function renderCartModalList() {
+      const container = document.getElementById('cart-items-list');
+      container.innerHTML = '';
+      cart.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'bg-slate-50 rounded-xl p-3 border border-slate-200 flex items-center justify-between gap-3';
+        row.innerHTML = `
+          <div class="flex-1">
+            <span class="text-[10px] font-mono text-slate-400 font-bold block">${item.code}</span>
+            <h5 class="font-bold text-sm text-slate-900">${item.name}</h5>
+            <div class="text-xs text-slate-500 font-mono">單價：$${item.price}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="updateCartQty('${item.id}', -1); renderCartModalList();" class="w-7 h-7 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 flex items-center justify-center font-bold">-</button>
+            <span class="font-mono font-bold text-slate-900 text-sm w-6 text-center">${item.quantity}</span>
+            <button onclick="updateCartQty('${item.id}', 1); renderCartModalList();" class="w-7 h-7 rounded-lg bg-teal-700 text-white flex items-center justify-center font-bold">+</button>
+          </div>
+          <div class="text-right min-w-[55px]">
+            <div class="text-sm font-black text-teal-900 font-mono">$${item.price * item.quantity}</div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // --- Order Submissions ---
+    function generateNextOrderNumber() {
+      if (orders.length === 0) return '#001';
+      const highest = orders.reduce((max, ord) => {
+        const m = ord.orderNumber && ord.orderNumber.match(/\d+/);
+        const v = m ? parseInt(m[0], 10) : 0;
+        return v > max ? v : max;
+      }, 0);
+      return `#${(highest + 1).toString().padStart(3, '0')}`;
+    }
+
+    function submitOrder() {
+      if (cart.length === 0) return;
+      const orderNum = generateNextOrderNumber();
+      const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      const note = document.getElementById('cart-order-note').value.trim();
+
+      const newOrder = {
+        id: 'ord-' + Date.now(),
+        orderNumber: orderNum,
+        items: JSON.parse(JSON.stringify(cart)),
+        total: total,
+        status: 'pending_payment',
+        createdAt: Date.now(),
+        note: note
+      };
+
+      orders.unshift(newOrder);
+      activeCustomerOrderId = newOrder.id;
+
+      cart = [];
+      document.getElementById('cart-order-note').value = '';
+      closeCartModal();
+      renderCustomerMenu();
+      renderCartUI();
+      renderAll();
+      broadcastSync();
+
+      showToast(`處方已建立！門診號：${orderNum}`);
+      openPrescriptionTicketModal();
+    }
+
+    function clearActiveCustomerOrder() {
+      activeCustomerOrderId = null;
+      renderActiveCustomerBanner();
+    }
+
+    // --- Ticket Modal ---
+    function openPrescriptionTicketModal() {
+      const ord = orders.find(o => o.id === activeCustomerOrderId) || orders[0];
+      if (!ord) return;
+
+      document.getElementById('ticket-modal-number').innerText = ord.orderNumber;
+      document.getElementById('ticket-modal-total').innerText = ord.total;
+
+      // Stamp
+      const stampContainer = document.getElementById('ticket-modal-stamp-container');
+      stampContainer.innerHTML = getStampHTML(ord.status);
+
+      // Instructions
+      const inst = document.getElementById('ticket-modal-instructions');
+      if (ord.status === 'pending_payment') {
+        inst.innerHTML = `
+          <div class="space-y-1">
+            <span class="font-black text-rose-600 block text-sm">【尚未批價】請至 115 攤位付現</span>
+            <p class="text-slate-600 text-[11px]">
+              請出示此號碼牌予顧攤工作人員並繳交 <strong class="text-slate-900 font-mono">$${ord.total} 元</strong>，確認收款後大廚開火現炒！
+            </p>
+          </div>
+        `;
+      } else if (ord.status === 'preparing') {
+        inst.innerHTML = `
+          <div class="space-y-1">
+            <span class="font-black text-teal-700 block text-sm">【已完成批價】主治大廚現炒調理中</span>
+            <p class="text-slate-600 text-[11px]">
+              大火現炒約需 3~5 分鐘，請留意現場叫號大看板或顧攤同學大聲喊號！
+            </p>
+          </div>
+        `;
+      } else if (ord.status === 'ready') {
+        inst.innerHTML = `
+          <div class="space-y-1 animate-pulse">
+            <span class="font-black text-emerald-600 block text-sm">【處方調配完畢】請立即前往窗口領藥！</span>
+            <p class="text-slate-600 text-[11px]">
+              請出示手機號碼牌 <strong class="text-slate-900 font-mono">${ord.orderNumber}</strong> 領取剛炒好的熱騰騰餐點！
+            </p>
+          </div>
+        `;
+      } else {
+        inst.innerHTML = `
+          <div class="space-y-1">
+            <span class="font-black text-slate-500 block text-sm">【已完成領藥出院】</span>
+            <p class="text-slate-400 text-[11px]">祝您園遊會遊玩愉快，早日康復出院！</p>
+          </div>
+        `;
+      }
+
+      // Items list
+      const itemsContainer = document.getElementById('ticket-modal-items');
+      itemsContainer.innerHTML = '';
+      ord.items.forEach(it => {
+        const row = document.createElement('div');
+        row.className = 'flex justify-between font-mono text-xs';
+        row.innerHTML = `
+          <span class="text-slate-700">${it.name} × ${it.quantity}</span>
+          <span class="font-bold text-slate-900">$${it.price * it.quantity}</span>
+        `;
+        itemsContainer.appendChild(row);
+      });
+
+      const noteRow = document.getElementById('ticket-modal-note-row');
+      if (ord.note) {
+        noteRow.innerText = '備註指示：' + ord.note;
+        noteRow.classList.remove('hidden');
+      } else {
+        noteRow.classList.add('hidden');
+      }
+
+      document.getElementById('modal-prescription-ticket').classList.remove('hidden');
+    }
+
+    function closePrescriptionTicketModal() {
+      document.getElementById('modal-prescription-ticket').classList.add('hidden');
+    }
+
+    function getStampHTML(status) {
+      if (status === 'pending_payment') {
+        return `<span class="stamp-badge border-rose-600 text-rose-600 -rotate-6">【 未 批 價 付 款 】</span>`;
+      }
+      if (status === 'preparing') {
+        return `<span class="stamp-badge border-teal-700 text-teal-800 -rotate-3">【 已 批 價 • 調 理 中 】</span>`;
+      }
+      if (status === 'ready') {
+        return `<span class="stamp-badge border-emerald-600 text-emerald-700 -rotate-6 animate-pulse">【 調 配 完 畢 • 請 領 藥 】</span>`;
+      }
+      return `<span class="stamp-badge border-slate-400 text-slate-500 -rotate-2">【 已 完 成 出 院 】</span>`;
+    }
+
+    // --- Customer Menu Rendering ---
+    function renderCustomerMenu() {
+      const container = document.getElementById('menu-container');
+      container.innerHTML = '';
+      CLINICAL_MENU.forEach(item => {
+        const cartItem = cart.find(c => c.id === item.id);
+        const qty = cartItem ? cartItem.quantity : 0;
+
+        const card = document.createElement('div');
+        card.className = 'bg-white border border-slate-200 rounded-2xl p-5 hover:border-teal-500/60 transition-all shadow-sm flex flex-col justify-between';
+        card.innerHTML = `
+          <div>
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <span class="text-[11px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">${item.code}</span>
+              <span class="text-[11px] px-2.5 py-0.5 rounded-full border ${item.tagClass}">${item.tag}</span>
+            </div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-2xl">${item.icon}</span>
+              <h4 class="text-base font-black text-slate-900">${item.name}</h4>
+            </div>
+            <p class="text-xs text-slate-500 line-clamp-2 mt-1 mb-4 leading-relaxed">${item.desc}</p>
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <div>
+              <span class="text-[10px] text-slate-400 block font-semibold">自費批價</span>
+              <div class="text-2xl font-black text-teal-800 font-mono">$${item.price}</div>
+            </div>
+
+            ${qty > 0 ? `
+              <div class="flex items-center gap-2 bg-slate-100 border border-slate-200 rounded-xl p-1">
+                <button onclick="updateCartQty('${item.id}', -1)" class="w-8 h-8 rounded-lg bg-white hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold shadow-sm">-</button>
+                <span class="font-mono font-bold text-slate-900 text-sm w-6 text-center">${qty}</span>
+                <button onclick="addToCart('${item.id}')" class="w-8 h-8 rounded-lg bg-teal-700 hover:bg-teal-800 text-white flex items-center justify-center font-bold shadow-sm">+</button>
+              </div>
+            ` : `
+              <button onclick="addToCart('${item.id}')" class="px-4 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 active:scale-95 transition-all">
+                <i class="fa-solid fa-plus"></i>
+                <span>納入處方</span>
+              </button>
+            `}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderActiveCustomerBanner() {
+      const banner = document.getElementById('customer-active-order-banner');
+      if (!activeCustomerOrderId) {
+        banner.classList.add('hidden');
+        return;
+      }
+      const ord = orders.find(o => o.id === activeCustomerOrderId);
+      if (!ord) {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      banner.classList.remove('hidden');
+      document.getElementById('active-banner-order-number').innerText = ord.orderNumber;
+      document.getElementById('active-banner-total').innerText = `$${ord.total} 元整`;
+
+      const badge = document.getElementById('active-banner-status-badge');
+      const headline = document.getElementById('active-banner-headline');
+
+      if (ord.status === 'pending_payment') {
+        badge.className = 'text-xs px-2.5 py-0.5 rounded-full border bg-rose-50 text-rose-700 border-rose-200 font-bold';
+        badge.innerText = '待付現批價';
+        headline.innerText = '🔴 請拿著手機至「115 攤位窗口」付現批價！';
+      } else if (ord.status === 'preparing') {
+        badge.className = 'text-xs px-2.5 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200 font-bold';
+        badge.innerText = '大火現炒中';
+        headline.innerText = '🟡 批價完成！主治大廚現炒調理中...';
+      } else if (ord.status === 'ready') {
+        badge.className = 'text-xs px-2.5 py-0.5 rounded-full border bg-emerald-50 text-emerald-800 border-emerald-300 font-bold';
+        badge.innerText = '請出院領藥';
+        headline.innerText = '🟢 餐點已調理完成！請立即前往 115 窗口領藥取餐！';
+      } else {
+        badge.className = 'text-xs px-2.5 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200';
+        badge.innerText = '已領藥出院';
+        headline.innerText = '⚪ 已領藥取餐完成，祝您逛得愉快早日出院！';
+      }
+    }
+
+    // --- Board Rendering ---
+    function renderBoard() {
+      const preparing = orders.filter(o => o.status === 'preparing');
+      const ready = orders.filter(o => o.status === 'ready');
+
+      document.getElementById('board-count-preparing').innerText = `${preparing.length} 單`;
+      document.getElementById('board-count-ready').innerText = `${ready.length} 單待領`;
+
+      const prepList = document.getElementById('board-preparing-list');
+      prepList.innerHTML = '';
+      if (preparing.length === 0) {
+        prepList.innerHTML = '<div class="col-span-full py-12 text-center text-slate-600 text-xs">目前無排隊調理餐點，隨點隨做</div>';
+      } else {
+        preparing.forEach(ord => {
+          const div = document.createElement('div');
+          div.className = 'bg-slate-800/80 border border-amber-500/30 rounded-2xl p-4 text-center shadow-md';
+          div.innerHTML = `
+            <div class="text-3xl sm:text-4xl font-black text-amber-400 tracking-wider font-mono">${ord.orderNumber}</div>
+            <span class="text-[10px] text-slate-400 mt-1 block">現炒大火調理</span>
+          `;
+          prepList.appendChild(div);
+        });
+      }
+
+      const readyList = document.getElementById('board-ready-list');
+      readyList.innerHTML = '';
+      if (ready.length === 0) {
+        readyList.innerHTML = '<div class="col-span-full py-12 text-center text-slate-600 text-xs">餐點調理完成後，號碼將立即在此亮起</div>';
+      } else {
+        ready.forEach(ord => {
+          const div = document.createElement('div');
+          div.className = 'bg-emerald-500 text-slate-950 rounded-2xl p-4 text-center shadow-lg shadow-emerald-500/30 animate-pulse';
+          div.innerHTML = `
+            <div class="text-3xl sm:text-4xl font-black tracking-wider font-mono">${ord.orderNumber}</div>
+            <span class="text-[10px] font-black uppercase tracking-wider bg-slate-950 text-emerald-300 px-2 py-0.5 rounded-full mt-1.5 inline-block">請至 115 窗口領藥</span>
+          `;
+          readyList.appendChild(div);
+        });
+      }
+    }
+
+    // --- Staff Console Rendering ---
+    function setStaffSubTab(tab) {
+      staffSubTab = tab;
+      document.getElementById('staff-subtab-orders').classList.add('hidden');
+      document.getElementById('staff-subtab-stats').classList.add('hidden');
+      document.getElementById('staff-subtab-poster').classList.add('hidden');
+
+      document.getElementById('subtab-btn-orders').className = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all';
+      document.getElementById('subtab-btn-stats').className = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all';
+      document.getElementById('subtab-btn-poster').className = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all';
+
+      if (tab === 'orders') {
+        document.getElementById('staff-subtab-orders').classList.remove('hidden');
+        document.getElementById('subtab-btn-orders').className = 'px-3 py-1.5 rounded-lg bg-white text-teal-900 shadow-sm transition-all';
+      } else if (tab === 'stats') {
+        document.getElementById('staff-subtab-stats').classList.remove('hidden');
+        document.getElementById('subtab-btn-stats').className = 'px-3 py-1.5 rounded-lg bg-white text-teal-900 shadow-sm transition-all';
+      } else if (tab === 'poster') {
+        document.getElementById('staff-subtab-poster').classList.remove('hidden');
+        document.getElementById('subtab-btn-poster').className = 'px-3 py-1.5 rounded-lg bg-white text-teal-900 shadow-sm transition-all';
+      }
+    }
+
+    function setStaffFilter(f) {
+      staffFilter = f;
+      document.querySelectorAll('.staff-filter-btn').forEach(btn => {
+        if (btn.dataset.filter === f) {
+          btn.className = 'staff-filter-btn px-3.5 py-2 rounded-xl whitespace-nowrap border bg-teal-700 text-white border-teal-700 shadow-sm';
+        } else {
+          btn.className = 'staff-filter-btn px-3.5 py-2 rounded-xl whitespace-nowrap border bg-white text-slate-600 border-slate-200 hover:text-slate-900';
+        }
+      });
+      renderStaffOrders();
+    }
+
+    function updateOrderStatus(orderId, newStatus) {
+      const ord = orders.find(o => o.id === orderId);
+      if (!ord) return;
+      ord.status = newStatus;
+
+      if (newStatus === 'ready') {
+        openShoutModal(ord);
+        playHospitalChime();
+      }
+
+      broadcastSync();
+      renderAll();
+
+      const msgs = {
+        preparing: '已確認批價收現！移交大火現炒',
+        ready: '餐點現炒完成！請大聲喊號',
+        completed: '已完成領藥出院！',
+        pending_payment: '重設為待批價'
+      };
+      showToast(`${ord.orderNumber} ${msgs[newStatus] || ''}`);
+    }
+
+    function renderStaffOrders() {
+      const container = document.getElementById('staff-orders-grid');
+      container.innerHTML = '';
+
+      let list = orders;
+      if (staffFilter !== 'all') {
+        list = orders.filter(o => o.status === staffFilter);
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = '<div class="col-span-full py-12 text-center text-slate-400 text-xs">目前無此狀態之處方單據</div>';
+        return;
+      }
+
+      list.forEach(ord => {
+        const card = document.createElement('div');
+        const borderClass = ord.status === 'pending_payment' ? 'border-rose-300 ring-1 ring-rose-200'
+          : ord.status === 'preparing' ? 'border-amber-300 ring-1 ring-amber-200'
+          : ord.status === 'ready' ? 'border-emerald-400 ring-2 ring-emerald-200'
+          : 'border-slate-200 opacity-60';
+
+        card.className = `bg-white rounded-2xl p-4 sm:p-5 border flex flex-col justify-between transition-all shadow-sm ${borderClass}`;
+        
+        // Status Badge
+        let badgeHtml = '';
+        if (ord.status === 'pending_payment') badgeHtml = '<span class="text-xs px-2.5 py-0.5 rounded-full border bg-rose-50 text-rose-700 border-rose-200 font-bold">待收現批價</span>';
+        else if (ord.status === 'preparing') badgeHtml = '<span class="text-xs px-2.5 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200 font-bold">大火現炒中</span>';
+        else if (ord.status === 'ready') badgeHtml = '<span class="text-xs px-2.5 py-0.5 rounded-full border bg-emerald-50 text-emerald-800 border-emerald-300 font-bold">請出院領藥</span>';
+        else badgeHtml = '<span class="text-xs px-2.5 py-0.5 rounded-full border bg-slate-100 text-slate-500 border-slate-200">已領藥出院</span>';
+
+        let itemsHtml = ord.items.map(it => `
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-800">• ${it.name}</span>
+            <span class="font-mono font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-700">× ${it.quantity}</span>
+          </div>
+        `).join('');
+
+        let noteHtml = ord.note ? `<div class="bg-amber-50 rounded-lg p-2 text-xs text-amber-900 mt-2 border border-amber-200">⚠️ 備註：${ord.note}</div>` : '';
+
+        let actionsHtml = '';
+        if (ord.status === 'pending_payment') {
+          actionsHtml = `
+            <button onclick="updateOrderStatus('${ord.id}', 'preparing')" class="w-full py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs sm:text-sm shadow-sm flex items-center justify-center gap-1.5 transition-all">
+              <i class="fa-solid fa-dollar-sign"></i>
+              <span>收到現金 $${ord.total} ➔ 開火現炒</span>
+            </button>
+          `;
+        } else if (ord.status === 'preparing') {
+          actionsHtml = `
+            <button onclick="updateOrderStatus('${ord.id}', 'ready')" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-sm shadow-md flex items-center justify-center gap-2 animate-pulse">
+              <i class="fa-solid fa-bullhorn"></i>
+              <span>現炒完成 ➔ 叫號大喊！</span>
+            </button>
+          `;
+        } else if (ord.status === 'ready') {
+          actionsHtml = `
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="openShoutModalById('${ord.id}')" class="py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs flex items-center justify-center gap-1">
+                <i class="fa-solid fa-bullhorn"></i>
+                <span>再次大喊</span>
+              </button>
+              <button onclick="updateOrderStatus('${ord.id}', 'completed')" class="py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-sm">
+                <i class="fa-solid fa-check"></i>
+                <span>完成領藥</span>
+              </button>
+            </div>
+          `;
+        } else {
+          actionsHtml = `
+            <div class="flex items-center justify-between text-xs text-slate-400 px-1">
+              <span>已完成出院</span>
+              <button onclick="updateOrderStatus('${ord.id}', 'ready')" class="text-teal-700 hover:underline">恢復叫號</button>
+            </div>
+          `;
+        }
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl font-black text-slate-900 font-mono">${ord.orderNumber}</span>
+                ${badgeHtml}
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] text-slate-400 block font-semibold">自費金額</span>
+                <div class="text-base font-black text-teal-900 font-mono">$${ord.total}</div>
+              </div>
+            </div>
+            <div class="py-3 space-y-2">
+              ${itemsHtml}
+              ${noteHtml}
+            </div>
+          </div>
+          <div class="pt-3 border-t border-slate-100">
+            ${actionsHtml}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // --- Statistics ---
+    function renderStats() {
+      const revenue = orders.filter(o => o.status !== 'pending_payment').reduce((sum, o) => sum + o.total, 0);
+      let noodles = 0;
+      let drinks = 0;
+      let combos = 0;
+
+      orders.filter(o => o.status !== 'pending_payment').forEach(o => {
+        o.items.forEach(it => {
+          if (it.id === 'noodle_plain' || it.id === 'noodle_egg') noodles += it.quantity;
+          if (it.id === 'drink_butterfly') drinks += it.quantity;
+          if (it.id && it.id.includes('combo')) {
+            combos += it.quantity;
+            noodles += it.quantity;
+            drinks += it.quantity;
+          }
+        });
+      });
+
+      // Quick Chips
+      document.getElementById('stats-chip-revenue').innerText = `$${revenue}`;
+      document.getElementById('stats-chip-pending').innerText = orders.filter(o => o.status === 'pending_payment').length;
+      document.getElementById('stats-chip-preparing').innerText = orders.filter(o => o.status === 'preparing').length;
+      document.getElementById('stats-chip-ready').innerText = orders.filter(o => o.status === 'ready').length;
+
+      // Stats Tab
+      document.getElementById('stats-total-revenue').innerText = `$${revenue}`;
+      document.getElementById('stats-total-noodles').innerHTML = `${noodles} <span class="text-sm font-normal text-slate-500">份</span>`;
+      document.getElementById('stats-total-drinks').innerHTML = `${drinks} <span class="text-sm font-normal text-slate-500">杯</span>`;
+      document.getElementById('stats-total-combos').innerHTML = `${combos} <span class="text-sm font-normal text-slate-500">份</span>`;
+    }
+
+    // --- Big Shoutout Modal (For shouting with student voices) ---
+    function openShoutModal(ord) {
+      document.getElementById('shout-order-number').innerText = ord.orderNumber;
+      document.getElementById('shout-order-dialogue').innerText = `「請大聲喊：【${ord.orderNumber} 號】取餐出院！」`;
+
+      const itemsContainer = document.getElementById('shout-order-items');
+      itemsContainer.innerHTML = '';
+      ord.items.forEach(it => {
+        const row = document.createElement('div');
+        row.className = 'flex justify-between font-semibold text-slate-800';
+        row.innerHTML = `<span>• ${it.name}</span><span class="text-teal-800 font-black">× ${it.quantity}</span>`;
+        itemsContainer.appendChild(row);
+      });
+
+      const noteDiv = document.getElementById('shout-order-note');
+      if (ord.note) {
+        noteDiv.innerText = '備註指示：' + ord.note;
+        noteDiv.classList.remove('hidden');
+      } else {
+        noteDiv.classList.add('hidden');
+      }
+
+      document.getElementById('modal-shout').classList.remove('hidden');
+    }
+
+    function openShoutModalById(id) {
+      const ord = orders.find(o => o.id === id);
+      if (ord) openShoutModal(ord);
+    }
+
+    function closeShoutModal() {
+      document.getElementById('modal-shout').classList.add('hidden');
+    }
+
+    // --- QR Code Setup ---
+    function setupStallQR() {
+      const currentUrl = window.location.href || 'https://google.com';
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(currentUrl)}`;
+      document.getElementById('stall-qr-image').src = qrApiUrl;
+    }
+
+    // --- Master Render ---
+    function renderAll() {
+      renderCustomerMenu();
+      renderActiveCustomerBanner();
+      renderBoard();
+      renderStaffOrders();
+      renderStats();
+    }
+
+    // Initialize application on load
+    window.onload = function() {
+      renderAll();
+      setupStallQR();
+    };
+  </script>
+</body>
+</html>
